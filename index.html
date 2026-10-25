@@ -59,8 +59,8 @@
 </section>
 <section class="page" id="friends">
 <div class="section-head"><h2>👥 تحدي أصحابك</h2><span>دوري خاص</span></div>
-<div class="challenge"><div class="eyebrow">اصنع منافستك</div><h2 style="margin:8px 0">مين الأفضل فيكم؟ 🔥</h2><p class="notice">اكتب اسم الدوري واعمل كود تجريبي للدعوة. المشاركة بين أجهزة مختلفة وحفظ النتائج يحتاجان قاعدة بيانات، وسنضيفهما في مرحلة الربط.</p><input class="field" id="leagueName" style="width:100%;margin-top:8px" placeholder="مثال: دوري الشلة"><div class="challenge-row"><button class="btn primary" onclick="createLeague()">إنشاء دوري</button><button class="btn secondary" onclick="joinLeague()">دخول بكود</button></div><div id="leagueResult"></div></div>
-<div class="section-head"><h2>🏆 ترتيب تجريبي</h2><span>مثال للواجهة</span></div><div class="leader"><div class="rank">1</div><div><strong>أحمد (أنت)</strong><small>KORA X</small></div><div class="points" id="myPoints">0 نقطة</div></div><div class="leader"><div class="rank">2</div><div><strong>محمد</strong><small>فريق النجوم</small></div><div class="points">-- نقطة</div></div><div class="leader"><div class="rank">3</div><div><strong>عمر</strong><small>الملوك</small></div><div class="points">-- نقطة</div></div>
+<div class="challenge"><div class="eyebrow">اصنع منافستك</div><h2 style="margin:8px 0">مين الأفضل فيكم؟ 🔥</h2><p class="notice">أنشئ دوريًا حقيقيًا أو انضم لدوري أصدقائك باستخدام كود الدعوة. يلزم تسجيل الدخول لحفظ مشاركتك.</p><input class="field" id="leagueName" style="width:100%;margin-top:8px" placeholder="مثال: دوري الشلة"><div class="challenge-row"><button class="btn primary" onclick="createLeague()">إنشاء دوري</button><button class="btn secondary" onclick="joinLeague()">دخول بكود</button></div><div id="leagueResult"></div></div>
+<div class="section-head"><h2>🏆 دورياتي</h2><button class="btn secondary" onclick="loadMyLeagues()">تحديث ↻</button></div><div id="myLeagues"><div class="empty">سجّل الدخول ثم أنشئ دوريًا أو انضم باستخدام كود.</div></div>
 </section>
 <section class="page" id="match">
 <div class="section-head"><h2>🎮 مباراة افتراضية</h2><span>محاكاة تجريبية</span></div><div class="challenge"><div class="eyebrow">تحدي سريع</div><h2>فريقك ضد فريق صاحبك</h2><p class="notice">المحاكاة هنا للعرض والتجربة فقط، وليست نتيجة مباراة حقيقية. اختر فريقك أولًا ثم ابدأ المواجهة.</p><div style="display:flex;align-items:center;justify-content:space-around;text-align:center;margin:24px 0"><div><div style="font-size:34px">🛡️</div><strong>فريقك</strong><div class="small" id="yourTeamScore">قوة 0</div></div><div style="font-size:22px;color:var(--gold);font-weight:1000">VS</div><div><div style="font-size:34px">⚔️</div><strong>فريق الأصدقاء</strong><div class="small">قوة 75</div></div></div><button class="btn primary" style="width:100%" onclick="simulate()">ابدأ المباراة ⚽</button><div id="matchResult" class="empty" style="margin-top:12px">نتيجة المباراة هتظهر هنا</div></div>
@@ -323,7 +323,7 @@ b.innerHTML=`<div class="section-head"><h2>🏴 البريميرليج: النت
 return `<article class="fixture-card"><div class="fixture-top"><span>${d?d.toLocaleDateString("ar-EG",{...tz,weekday:"long",day:"numeric",month:"long"}):"موعد غير محدد"}</span><b style="color:var(--gold)">${d?d.toLocaleTimeString("ar-EG",{...tz,hour:"2-digit",minute:"2-digit"}):""}</b></div><div class="fixture-teams"><span class="tm">${bd(f.hc)}${f.home}</span><span class="fixture-vs">${f.homeScore==null?"VS":f.homeScore+" - "+f.awayScore}</span><span class="tm">${bd(f.ac)}${f.away}</span></div><div class="fixture-league">${f.finished?"انتهت":"قادمة"}</div></article>`}).join("")}
 async function loadData(){try{const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+" ← "+r.status);return r.json()});
 const pl=await j("data/players.json");
-players=players.filter(p=>p.league==="الدوري المصري").concat(pl.map(p=>({id:1000+p.id,name:p.name,club:p.team,league:"الدوري الإنجليزي",pos:POS_AR[p.pos],rating:Math.min(95,Math.round(62+(p.ppg||0)*4.2)),price:p.price,pts:p.gw||0,total:p.points,code:p.code,tcode:p.tcode,hurt:p.status&&p.status!=="a"})));live=true;
+players=players.filter(p=>p.league==="الدوري المصري").concat(pl.map(p=>({id:Number(p.id),name:p.name,club:p.team,league:"الدوري الإنجليزي",pos:POS_AR[p.pos],rating:Math.min(95,Math.round(62+(p.ppg||0)*4.2)),price:p.price,pts:p.gw||0,total:p.points,code:p.code,tcode:p.tcode,hurt:p.status&&p.status!=="a"})));live=true;
 try{fx=await j("data/fixtures.json");plRound=(fx.find(f=>!f.finished)||fx[fx.length-1]||{}).round}catch(e){fx=[]}try{meta=await j("data/meta.json")}catch(e){}}catch(e){live=false;err=String(e.message||e)}
 selected=selected.filter(id=>players.some(p=>p.id===id));if(!selected.includes(captain))captain=0;
 document.getElementById("dataBanner").textContent=live?"✅ بيانات الدوري الإنجليزي حقيقية (من data/players.json). الدوري المصري بيانات تجريبية.":"⚠️ بيانات تجريبية. شغّل GitHub Action مرة واحدة عشان تظهر بيانات البريميرليج الحقيقية. السبب: "+err;save();refresh()}
@@ -365,7 +365,7 @@ b.innerHTML=`<div class="rnav"><button onclick="go(-1)" aria-label="السابق
 return `<article class="fixture-card"><div class="fixture-top"><span>${d?d.toLocaleDateString("ar-EG",{...tz,weekday:"long",day:"numeric",month:"long"}):"موعد غير محدد"}</span><b style="color:var(--gold)">${d?d.toLocaleTimeString("ar-EG",{...tz,hour:"2-digit",minute:"2-digit"}):""}</b></div><div class="fixture-teams"><span class="tm">${bd(f.hc)}${f.home}</span><span class="fixture-vs">${f.homeScore==null?"VS":f.homeScore+" - "+f.awayScore}</span><span class="tm">${bd(f.ac)}${f.away}</span></div><div class="fixture-league">${f.finished?"انتهت":"قادمة"}</div></article>`}).join("")}
 async function loadData(){try{const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+" ← "+r.status);return r.json()});
 const pl=await j("data/players.json");
-players=pl.map(p=>({id:1000+p.id,name:p.name,club:p.team,league:"الدوري الإنجليزي",pos:POS_AR[p.pos],rating:Math.min(95,Math.round(62+(p.ppg||0)*4.2)),price:p.price,pts:p.gw||0,total:p.points,code:p.code,tcode:p.tcode,hurt:p.status&&p.status!=="a"}));live=true;
+players=pl.map(p=>({id:Number(p.id),name:p.name,club:p.team,league:"الدوري الإنجليزي",pos:POS_AR[p.pos],rating:Math.min(95,Math.round(62+(p.ppg||0)*4.2)),price:p.price,pts:p.gw||0,total:p.points,code:p.code,tcode:p.tcode,hurt:p.status&&p.status!=="a"}));live=true;
 try{fx=await j("data/fixtures.json");const now=Date.now()-72e5,u=fx.filter(f=>f.round&&f.kickoff&&new Date(f.kickoff)>now).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff))[0];plRound=u?u.round:(fx[fx.length-1]||{}).round}catch(e){fx=[]}
 try{meta=await j("data/meta.json")}catch(e){}}catch(e){live=false;err=String(e.message||e)}
 if(live){selected=selected.filter(id=>players.some(p=>p.id===id));if(!selected.includes(captain))captain=0;save()}
@@ -387,4 +387,37 @@ if(ev==="SIGNED_OUT")showSignedOut();else if(ses&&ses.user&&!kxDone)setTimeout((
 if(!ses){const b=JSON.parse(localStorage.getItem("kx_sess")||"null");if(b){const r=await supabaseClient.auth.setSession({access_token:b.a,refresh_token:b.r});if(r.error)localStorage.removeItem("kx_sess");else ses=r.data.session}}
 if(ses&&ses.user&&!kxDone)await afterLogin(ses.user)}catch(e){}})();
 </script>
+
+<script>
+// KORA X real friends-league UI: relies on the SQL setup in supabase/kora_x_leagues.sql.
+let kxCurrentLeagueId=null;
+function leagueMessage(msg,isError=false){const el=document.getElementById('leagueResult');if(el){el.innerHTML=`<div class="notice" style="color:${isError?'var(--red)':'var(--green)'}">${escapeLeagueText(msg)}</div>`}}
+function escapeLeagueText(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function requireLeagueLogin(){if(!currentUser){leagueMessage('سجّل الدخول أولًا عشان تقدر تنشئ دوري أو تنضم لدوري.',true);return false}return true}
+async function createLeague(){
+ if(!requireLeagueLogin())return;
+ const name=(document.getElementById('leagueName').value||'').trim();
+ if(name.length<3||name.length>40){leagueMessage('اسم الدوري لازم يكون من 3 إلى 40 حرفًا.',true);return}
+ const btn=document.querySelector('#friends .challenge-row .primary');if(btn)btn.disabled=true;
+ try{const {data,error}=await supabaseClient.rpc('kx_create_league',{p_name:name});if(error)throw error;
+ const row=Array.isArray(data)?data[0]:data;if(!row?.invite_code)throw new Error('تم إنشاء الطلب لكن لم يرجع كود الدعوة.');
+ document.getElementById('leagueResult').innerHTML=`<div class="empty" style="margin-top:12px"><strong>${escapeLeagueText(row.name||name)}</strong><p>كود دعوة الدوري</p><div style="font-size:24px;color:var(--gold);font-weight:1000;letter-spacing:2px">${escapeLeagueText(row.invite_code)}</div><button class="btn secondary" style="margin-top:10px" onclick="copyLeagueCode('${escapeLeagueText(row.invite_code)}')">نسخ الكود</button></div>`;
+ await loadMyLeagues();toast('تم إنشاء الدوري وحفظه في قاعدة البيانات');
+ }catch(e){leagueMessage('تعذر إنشاء الدوري: '+(e.message||'تأكد من تطبيق ملف SQL المرفق في Supabase.'),true)}finally{if(btn)btn.disabled=false}
+}
+async function copyLeagueCode(code){try{await navigator.clipboard.writeText(code);toast('تم نسخ كود الدعوة')}catch{prompt('انسخ كود الدعوة:',code)}}
+async function joinLeague(){if(!requireLeagueLogin())return;const code=prompt('اكتب كود دعوة الدوري');if(!code)return;
+ try{const {data,error}=await supabaseClient.rpc('kx_join_league',{p_code:code.trim().toUpperCase()});if(error)throw error;const row=Array.isArray(data)?data[0]:data;if(row?.name)leagueMessage('انضممت إلى دوري «'+row.name+'» بنجاح.');else leagueMessage('تم إرسال طلب الانضمام.');await loadMyLeagues();toast('تم الانضمام للدوري')}
+ catch(e){leagueMessage('تعذر الانضمام: '+(e.message||'تأكد من صحة الكود وإعداد قاعدة البيانات.'),true)}
+}
+async function loadMyLeagues(){const root=document.getElementById('myLeagues');if(!root)return;if(!currentUser){root.innerHTML='<div class="empty">سجّل الدخول أولًا لعرض دورياتك.</div>';return}root.innerHTML='<div class="empty">جاري تحميل دورياتك...</div>';
+ try{const {data,error}=await supabaseClient.rpc('kx_my_leagues');if(error)throw error;const leagues=Array.isArray(data)?data:[];if(!leagues.length){root.innerHTML='<div class="empty">لسه مش مشترك في أي دوري. أنشئ دوريًا أو أدخل كود صديقك.</div>';return}
+ root.innerHTML=leagues.map(l=>`<article class="challenge" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><div class="eyebrow">دوري الأصدقاء</div><h3 style="margin:7px 0">${escapeLeagueText(l.name)}</h3><div class="small">كود الدعوة: <b style="color:var(--gold)">${escapeLeagueText(l.invite_code)}</b> · ${Number(l.member_count||0)} أعضاء</div></div><button class="btn secondary" onclick="copyLeagueCode('${escapeLeagueText(l.invite_code)}')">نسخ</button></div><div class="section-head"><h2>الترتيب</h2><span>نقاط الجولة</span></div>${(l.members||[]).length?(l.members||[]).map((m,i)=>`<div class="leader"><div class="rank">${i+1}</div><div><strong>${escapeLeagueText(m.display_name||'كابتن')}</strong><small>${m.user_id===currentUser.id?'أنت':'عضو الدوري'}</small></div><div class="points">${Number(m.points||0)} نقطة</div></div>`).join(''):'<div class="empty">لا يوجد أعضاء لعرضهم بعد.</div>'}<div class="notice">ترتيب الأعضاء محفوظ في قاعدة البيانات. ربط النقاط الرسمية تلقائيًا بهذا الترتيب يحتاج تشغيل ترحيل النقاط الآمن على الخادم.</div></article>`).join('');
+ }catch(e){root.innerHTML=`<div class="empty">تعذر تحميل دوريات الأصدقاء: ${escapeLeagueText(e.message||'خطأ غير معروف')}<br><br>إذا ظهرت رسالة أن الدالة غير موجودة، طبّق ملف <b>supabase/kora_x_leagues.sql</b> في SQL Editor داخل Supabase.</div>`}
+}
+const _kxShowPage=showPage;showPage=function(id){_kxShowPage(id);if(id==='friends')loadMyLeagues()};
+const _kxShowSignedIn=showSignedIn;showSignedIn=function(user){_kxShowSignedIn(user);if(document.getElementById('friends')?.classList.contains('active'))loadMyLeagues()};
+const _kxShowSignedOut=showSignedOut;showSignedOut=function(){_kxShowSignedOut();const root=document.getElementById('myLeagues');if(root)root.innerHTML='<div class="empty">سجّل الدخول أولًا لعرض دورياتك.</div>'};
+</script>
+
 </body></html>
