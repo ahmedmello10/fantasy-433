@@ -69,3 +69,15 @@ body.auth-mode .auth-card:before{content:"";position:absolute;inset:0 0 auto;hei
 @media(min-width:700px){body.auth-mode .app{padding-top:28px;padding-bottom:28px}body.auth-mode .auth-card{padding:30px 34px 25px}}
 @media(max-width:390px){body.auth-mode .app{padding-inline:14px}.auth-card{padding:20px 16px!important}.auth-ball{width:65px;height:65px;font-size:42px}.auth-logo{font-size:43px}.auth-welcome h2{font-size:23px}}
 @media(prefers-reduced-motion:no-preference){.auth-submit{transition:transform .2s,filter .2s}.auth-submit:hover{filter:brightness(1.06);transform:translateY(-1px)}}
+
+/* KORA X login visual assets — keep stadium-bg.svg beside index.html and style.css */
+body.auth-mode{background:#020805 url("stadium-bg.svg") center center / cover fixed no-repeat!important;position:relative;isolation:isolate}
+body.auth-mode:before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,8,5,.38),rgba(0,8,5,.70) 62%,rgba(0,5,3,.8));pointer-events:none}
+body.auth-mode .app{position:relative;z-index:1}
+body.auth-mode .auth-card{background:linear-gradient(155deg,rgba(2,19,12,.82),rgba(0,8,5,.90));border-color:rgba(38,255,105,.5);backdrop-filter:blur(7px)}
+.auth-brand{padding-top:7px}
+.auth-ball{background:radial-gradient(circle at 35% 25%,#1c3b2a,#06110b 70%);border:2px solid #30f36a;box-shadow:0 0 25px rgba(39,255,98,.22),inset 0 0 18px #28ed5b22}
+.auth-logo{display:block;color:#f5fff8;font-weight:1000;letter-spacing:-2px;font-size:clamp(43px,12vw,65px);line-height:1;text-shadow:0 4px 22px #000,0 0 20px #26e95c22}
+.auth-logo b{color:#35f36c;font-style:italic;text-shadow:0 0 18px #18f15d66}
+.auth-kicker{letter-spacing:3px}
+@media(max-height:760px){body.auth-mode .app{align-items:flex-start;padding-top:12px;padding-bottom:16px}body.auth-mode .auth-card{padding:16px 18px}.auth-brand{padding-bottom:14px}.auth-ball{width:55px;height:55px;font-size:36px}.auth-logo{font-size:42px}.auth-stadium-line{margin-top:12px}.auth-welcome{margin-bottom:12px}.auth-terms{margin-top:10px}}
