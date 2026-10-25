@@ -16,6 +16,7 @@
 .pitch{display:block!important}.field{background:repeating-linear-gradient(0deg,#2f8f55 0 46px,#298350 46px 92px);border:2px solid #d7f5e0aa;border-radius:16px;padding:16px 4px;display:flex;flex-direction:column;gap:20px;position:relative}.field:before{content:"";position:absolute;left:8%;right:8%;top:50%;border-top:2px solid #ffffff55}.prow{display:flex;justify-content:space-around;position:relative}.pp{background:none;color:#fff;display:flex;flex-direction:column;align-items:center;width:66px;gap:3px;padding:0}.pp i{width:40px;height:40px;border-radius:50% 50% 11px 11px;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:14px;border:2px solid #fff}.pp b{font-size:10px;background:#0b1730d9;padding:2px 5px;border-radius:5px;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pp s{text-decoration:none;font-size:10px;background:var(--gold);color:#111;border-radius:5px;padding:0 6px;font-weight:900}.bench{display:flex;justify-content:space-around;margin-top:8px;padding:10px 0;background:#0b1f2099;border-radius:12px}.hurt{color:var(--red)}.ev{display:flex;justify-content:space-between;padding:6px 10px;margin-top:5px;border-radius:9px;background:#151d30;font-size:13px}.ev.me{border-right:3px solid var(--green)}.ev.op{border-right:3px solid var(--red)}
 .shirt{position:relative;overflow:hidden;width:54px;height:54px}.shirt img,.pp i img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}.pp i{position:relative;overflow:hidden}.pp i u{text-decoration:none}.bd{width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-inline-end:5px}.tm{display:flex;flex-direction:column;align-items:center;gap:6px}.tm .bd{width:34px;height:34px;margin:0}
 </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app">
@@ -23,12 +24,25 @@
 <main>
 <section class="page active" id="home">
 <div class="auth-card" id="authCard">
+  <div class="auth-brand">
+    <div class="auth-ball">⚽<span>♛</span></div>
+    <div class="auth-logo">KORA <b>X</b></div>
+    <div class="auth-kicker">FANTASY FOOTBALL</div>
+    <div class="auth-stadium-line"></div>
+  </div>
   <div id="authForm">
-    <h2>🔐 حسابك في KORA X</h2>
-    <p>سجّل دخولك عشان نربط فريقك بحسابك ونجهّز حفظ التشكيلة على قاعدة البيانات.</p>
-    <div class="auth-fields"><input id="authEmail" type="email" autocomplete="email" placeholder="البريد الإلكتروني"><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور (6 أحرف على الأقل)"></div>
-    <div class="auth-actions"><button class="btn primary" id="signupBtn" onclick="signUp()">إنشاء حساب</button><button class="btn secondary" id="loginBtn" onclick="signIn()">تسجيل الدخول</button></div>
-    <div class="auth-status" id="authMessage" role="status">يمكنك تجربة الموقع بدون تسجيل، لكن حفظ البيانات على حسابك يتطلب تسجيل الدخول.</div>
+    <div class="auth-welcome"><span class="auth-crown">♛</span><h2 id="authHeading">أهلاً بعودتك يا كابتن</h2><p id="authSubheading">سجّل دخولك وكمل رحلتك للفوز</p></div>
+    <label class="auth-label" id="nameLabel" for="authName" hidden>اسم الكابتن</label>
+    <input class="auth-input auth-name hidden" id="authName" type="text" autocomplete="name" placeholder="اسمك داخل اللعبة">
+    <label class="auth-label" for="authEmail">البريد الإلكتروني</label>
+    <div class="auth-input-wrap"><span aria-hidden="true">✉</span><input class="auth-input" id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
+    <label class="auth-label" for="authPassword">كلمة المرور</label>
+    <div class="auth-input-wrap"><span aria-hidden="true">♙</span><input class="auth-input" id="authPassword" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل"><button class="password-toggle" type="button" onclick="togglePassword()" aria-label="إظهار كلمة المرور">◉</button></div>
+    <div class="auth-forgot"><button type="button" onclick="resetPassword()">نسيت كلمة المرور؟</button></div>
+    <div class="auth-actions"><button class="btn primary auth-submit" id="loginBtn" onclick="signIn()">تسجيل الدخول <span>➜</span></button><button class="btn primary auth-submit hidden" id="signupBtn" onclick="signUp()">إنشاء حساب <span>➜</span></button></div>
+    <div class="auth-switch"><span id="authSwitchText">لسه معندكش حساب؟</span> <button type="button" id="authSwitchBtn" onclick="toggleAuthMode()">إنشاء حساب جديد</button></div>
+    <div class="auth-status" id="authMessage" role="status">سجّل دخولك عشان تحفظ فريقك وتنافس أصحابك.</div>
+    <div class="auth-terms">بالمتابعة، أنت توافق على <span>الشروط وسياسة الخصوصية</span></div>
   </div>
   <div id="signedInBox" class="hidden"><div class="auth-user"><div><h2>✅ حسابك متصل</h2><div class="small" id="signedInEmail"></div></div><button class="btn secondary" onclick="signOut()">تسجيل الخروج</button></div><div class="auth-status" id="cloudStatus">جاري تجهيز فريقك...</div></div>
 </div>
@@ -119,9 +133,38 @@ function createLeague(){let name=document.getElementById("leagueName").value.tri
 function joinLeague(){let code=prompt("اكتب كود الدعوة");if(code)toast("واجهة الدخول جاهزة للتجربة؛ الربط الحقيقي سيأتي لاحقًا")}
 function simulate(){let mine=selectedPlayers().reduce((s,p)=>s+p.rating,0);if(selected.length<3){document.getElementById("matchResult").textContent="اختار 3 لاعبين على الأقل عشان نجرب المحاكاة.";return}let a=Math.max(0,Math.round(mine/selected.length/10+(Math.random()*3)));let b=Math.round(7.5+Math.random()*3);let result=a>b?"فريقك كسب! 🏆":a===b?"تعادل! 🤝":"صاحبك كسب المرة دي! ⚽";document.getElementById("matchResult").innerHTML=`<strong style="font-size:24px;color:var(--gold)">${a} - ${b}</strong><p>${result}</p><span class="small">نتيجة افتراضية للتجربة فقط</span>`}
 async function setAuthMessage(message,isError=false){const el=document.getElementById("authMessage");el.textContent=message;el.style.color=isError?"var(--red)":"var(--green)"}
-function showSignedIn(user){currentUser=user;document.getElementById("authForm").classList.add("hidden");document.getElementById("signedInBox").classList.remove("hidden");document.getElementById("signedInEmail").textContent=user.email||"حسابك";}
-function showSignedOut(){currentUser=null;currentTeamId=null;document.getElementById("authForm").classList.remove("hidden");document.getElementById("signedInBox").classList.add("hidden");}
-async function signUp(){const email=document.getElementById("authEmail").value.trim();const password=document.getElementById("authPassword").value;if(!email||!password){setAuthMessage("اكتب البريد الإلكتروني وكلمة المرور أولًا.",true);return}if(password.length<6){setAuthMessage("كلمة المرور لازم تكون 6 أحرف على الأقل.",true);return}const btn=document.getElementById("signupBtn");btn.disabled=true;try{const {data,error}=await supabaseClient.auth.signUp({email,password});if(error)throw error;if(data.session&&data.user){await afterLogin(data.user);setAuthMessage("تم إنشاء الحساب وتسجيل الدخول.")}else{setAuthMessage("تم إرسال طلب إنشاء الحساب. افتح بريدك الإلكتروني وأكّد الحساب، ثم ارجع وسجّل الدخول.")}}catch(e){setAuthMessage("تعذر إنشاء الحساب: "+(e.message||"تحقق من الاتصال والإعدادات"),true)}finally{btn.disabled=false}}
+function showSignedIn(user){document.body.classList.remove("auth-mode");currentUser=user;document.getElementById("authForm").classList.add("hidden");document.getElementById("signedInBox").classList.remove("hidden");document.getElementById("signedInEmail").textContent=user.email||"حسابك";}
+function showSignedOut(){document.body.classList.add("auth-mode");currentUser=null;currentTeamId=null;document.getElementById("authForm").classList.remove("hidden");document.getElementById("signedInBox").classList.add("hidden");}
+let authMode="login";
+function toggleAuthMode(){
+  authMode=authMode==="login"?"signup":"login";
+  const signingUp=authMode==="signup";
+  document.getElementById("authHeading").textContent=signingUp?"انضم لعيلة KORA X":"أهلاً بعودتك يا كابتن";
+  document.getElementById("authSubheading").textContent=signingUp?"اعمل حسابك وابدأ المنافسة":"سجّل دخولك وكمل رحلتك للفوز";
+  document.getElementById("authName").classList.toggle("hidden",!signingUp);
+  document.getElementById("nameLabel").hidden=!signingUp;
+  document.getElementById("authPassword").autocomplete=signingUp?"new-password":"current-password";
+  document.getElementById("loginBtn").classList.toggle("hidden",signingUp);
+  document.getElementById("signupBtn").classList.toggle("hidden",!signingUp);
+  document.getElementById("authSwitchText").textContent=signingUp?"عندك حساب بالفعل؟":"لسه معندكش حساب؟";
+  document.getElementById("authSwitchBtn").textContent=signingUp?"تسجيل الدخول":"إنشاء حساب جديد";
+  document.getElementById("authMessage").textContent=signingUp?"استخدم بريدًا إلكترونيًا تقدر تفتحه لتأكيد الحساب.":"سجّل دخولك عشان تحفظ فريقك وتنافس أصحابك.";
+}
+function togglePassword(){
+  const p=document.getElementById("authPassword");
+  p.type=p.type==="password"?"text":"password";
+}
+async function resetPassword(){
+  const email=document.getElementById("authEmail").value.trim();
+  if(!email){setAuthMessage("اكتب بريدك الإلكتروني الأول، وبعدها اضغط نسيت كلمة المرور.",true);document.getElementById("authEmail").focus();return}
+  try{
+    const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+    if(error)throw error;
+    setAuthMessage("لو البريد مسجل عندنا، هتوصلك رسالة فيها رابط إعادة تعيين كلمة المرور. راجع صندوق الوارد والرسائل غير المرغوب فيها.");
+  }catch(e){setAuthMessage("تعذر إرسال رابط الاستعادة: "+(e.message||"حاول مرة أخرى."),true)}
+}
+async function signUp(){const email=document.getElementById("authEmail").value.trim();const password=document.getElementById("authPassword").value;if(!email||!password){setAuthMessage("اكتب البريد الإلكتروني وكلمة المرور أولًا.",true);return}if(password.length<6){setAuthMessage("كلمة المرور لازم تكون 6 أحرف على الأقل.",true);return}const btn=document.getElementById("signupBtn");btn.disabled=true;try{const displayName=document.getElementById("authName").value.trim();
+const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:displayName||"كابتن KORA X"},emailRedirectTo:window.location.origin+window.location.pathname}});if(error)throw error;if(data.session&&data.user){await afterLogin(data.user);setAuthMessage("تم إنشاء الحساب وتسجيل الدخول.")}else{setAuthMessage("تم إرسال طلب إنشاء الحساب. افتح بريدك الإلكتروني وأكّد الحساب، ثم ارجع وسجّل الدخول.")}}catch(e){setAuthMessage("تعذر إنشاء الحساب: "+(e.message||"تحقق من الاتصال والإعدادات"),true)}finally{btn.disabled=false}}
 async function signIn(){const email=document.getElementById("authEmail").value.trim();const password=document.getElementById("authPassword").value;if(!email||!password){setAuthMessage("اكتب البريد الإلكتروني وكلمة المرور.",true);return}const btn=document.getElementById("loginBtn");btn.disabled=true;try{const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;await afterLogin(data.user);toast("تم تسجيل الدخول بنجاح") }catch(e){setAuthMessage("تعذر تسجيل الدخول: "+(e.message||"تحقق من البيانات"),true)}finally{btn.disabled=false}}
 async function signOut(){const {error}=await supabaseClient.auth.signOut();if(error){toast("حصل خطأ أثناء تسجيل الخروج");return}showSignedOut();setAuthMessage("تم تسجيل الخروج. فريقك المحلي ما زال محفوظًا على هذا الجهاز.");toast("تم تسجيل الخروج")}
 async function afterLogin(user){showSignedIn(user);const status=document.getElementById("cloudStatus");status.textContent="جاري تحميل فريقك من قاعدة البيانات...";try{let {data:team,error}=await supabaseClient.from("fantasy_teams").select("id,team_name,budget").eq("user_id",user.id).maybeSingle();if(error)throw error;if(!team){const created=await supabaseClient.from("fantasy_teams").insert({user_id:user.id,team_name:"فريقي في KORA X",budget:budget()}).select("id,team_name,budget").single();if(created.error)throw created.error;team=created.data}currentTeamId=team.id;const roster=await supabaseClient.from("fantasy_team_players").select("player_id").eq("team_id",team.id);if(roster.error)throw roster.error;const remoteIds=(roster.data||[]).map(r=>Number(r.player_id)).filter(id=>players.some(p=>p.id===id));if(remoteIds.length){selected=remoteIds;localStorage.setItem("fantasy433_squad",JSON.stringify(selected));updateStats();renderPlayers();renderPitch();status.textContent="تم تحميل تشكيلتك من قاعدة البيانات."}else{status.textContent="حسابك متصل وتم تجهيز فريقك. تنبيه: لازم تكون سجلات اللاعبين موجودة في جدول players قبل حفظ التشكيلة سحابيًا؛ اللاعبون المعروضون حاليًا تجريبيون."} }catch(e){status.textContent="الحساب اتصل، لكن تعذر تجهيز الفريق: "+(e.message||"راجع سياسات RLS والجداول");status.style.color="var(--red)"}}
@@ -210,6 +253,7 @@ async function loadFixtures(){
     status.style.color="var(--red)";
   }
 }
+document.body.classList.add("auth-mode");
 document.getElementById("fixtureDate").value=localDateISO();
 document.getElementById("fixtureLeague").addEventListener("change",()=>{if(window.lastPitchFixtures)renderFixtures(window.lastPitchFixtures)});
 
