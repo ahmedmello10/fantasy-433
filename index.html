@@ -277,7 +277,7 @@ if(!fx.length){b.innerHTML='<div class="empty">مواعيد ونتايج الب�
 const rs=[...new Set(fx.map(f=>f.round).filter(Boolean))].sort((a,c)=>a-c),tz={timeZone:"Africa/Cairo"};
 b.innerHTML=`<div class="section-head"><h2>🏴 البريميرليج: النتائج والمواعيد</h2><select class="field" onchange="plRound=+this.value;renderPL()">${rs.map(r=>`<option value="${r}" ${r===plRound?"selected":""}>الجولة ${r}</option>`).join("")}</select></div>`+fx.filter(f=>f.round===plRound).sort((a,c)=>new Date(a.kickoff)-new Date(c.kickoff)).map(f=>{const d=f.kickoff?new Date(f.kickoff):null;
 return `<article class="fixture-card"><div class="fixture-top"><span>${d?d.toLocaleDateString("ar-EG",{...tz,weekday:"long",day:"numeric",month:"long"}):"موعد غير محدد"}</span><b style="color:var(--gold)">${d?d.toLocaleTimeString("ar-EG",{...tz,hour:"2-digit",minute:"2-digit"}):""}</b></div><div class="fixture-teams"><span class="tm">${bd(f.hc)}${f.home}</span><span class="fixture-vs">${f.homeScore==null?"VS":f.homeScore+" - "+f.awayScore}</span><span class="tm">${bd(f.ac)}${f.away}</span></div><div class="fixture-league">${f.finished?"انتهت":"قادمة"}</div></article>`}).join("")}
-async function loadData(){try{const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+" ← "+r.status);return r.json()});
+async function loadData(){try{const j=u=>fetch(u+"?t="+Date.now()).then(r=>{if(!r.ok)throw new Error(u+" ← "+r.status);return r.json()});
 const pl=await j("data/players.json");
 players=players.filter(p=>p.league==="الدوري المصري").concat(pl.map(p=>({id:1000+p.id,name:p.name,club:p.team,league:"الدوري الإنجليزي",pos:POS_AR[p.pos],rating:Math.min(95,Math.round(62+(p.ppg||0)*4.2)),price:p.price,pts:p.gw||0,total:p.points,code:p.code,tcode:p.tcode,hurt:p.status&&p.status!=="a"})));live=true;
 try{fx=await j("data/fixtures.json");plRound=(fx.find(f=>!f.finished)||fx[fx.length-1]||{}).round}catch(e){fx=[]}try{meta=await j("data/meta.json")}catch(e){}}catch(e){live=false;err=String(e.message||e)}
@@ -290,7 +290,7 @@ document.querySelector(".filters").insertAdjacentHTML("beforeend",'<select id="p
 </script>
 <script>
 players=players.filter(p=>p.league==="الدوري الإنجليزي");
-let shown=60,sig="",dataReady=Promise.resolve();
+let shown=60,sig="",manual=false,dataReady=Promise.resolve();
 document.head.insertAdjacentHTML("beforeend","<style>.rnav{display:flex;align-items:center;justify-content:space-between;text-align:center;margin:6px 0 12px}.rnav button{background:#232d47;color:#fff;border-radius:12px;width:46px;height:46px;font-size:26px}</style>");
 (()=>{const q=s=>document.querySelector(s);
 q("#leagueFilter")?.remove();q("#fixtures .challenge")?.remove();q("#fixturesList")?.remove();document.querySelectorAll("#fixtures>.section-head")[1]?.remove();
@@ -312,17 +312,19 @@ const F={r:(a,b)=>b.rating-a.rating,hi:(a,b)=>b.price-a.price,lo:(a,b)=>a.price-
 const l=players.filter(p=>(!ps||p.pos===ps)&&(!cl||p.club===cl)&&(p.name+" "+p.club).toLowerCase().includes(q)).sort(F[so]);
 document.getElementById("players").innerHTML=l.slice(0,shown).map(card).join("")||'<div class="empty">مفيش لاعبين مطابقين.</div>';
 document.getElementById("shownCount").textContent=l.length+" لاعب";const mb=document.getElementById("moreBtn");if(mb)mb.style.display=l.length>shown?"block":"none"}
+const done=f=>f.finished||(f.kickoff&&f.homeScore!=null&&Date.now()>new Date(f.kickoff).getTime()+108e5);
+function curRound(){const r=rounds().find(n=>fx.some(f=>f.round===n&&f.kickoff&&!done(f)));return r||rounds().slice(-1)[0]}
 const rounds=()=>[...new Set(fx.map(f=>f.round).filter(Boolean))].sort((a,b)=>a-b);
-function go(n){const r=rounds(),i=r.indexOf(plRound)+n;if(i>=0&&i<r.length){plRound=r[i];renderPL()}}
+function go(n){const r=rounds(),i=r.indexOf(plRound)+n;if(i>=0&&i<r.length){plRound=r[i];manual=true;renderPL()}}
 function renderPL(){const b=document.getElementById("plFx");if(!b)return;
 if(!fx.length){b.innerHTML='<div class="empty">مواعيد ونتايج البريميرليج هتظهر بعد تحميل البيانات.</div>';return}
 const tz={timeZone:"Africa/Cairo"};
-b.innerHTML=`<div class="rnav"><button onclick="go(-1)" aria-label="السابقة">›</button><div><strong>الجولة ${plRound}</strong><div class="small">اسحب يمين أو شمال لتغيير الجولة</div></div><button onclick="go(1)" aria-label="التالية">‹</button></div>`+fx.filter(f=>f.round===plRound).sort((a,c)=>new Date(a.kickoff)-new Date(c.kickoff)).map(f=>{const d=f.kickoff?new Date(f.kickoff):null;
+b.innerHTML=`<div class="rnav"><button onclick="go(-1)" aria-label="السابقة">›</button><div><strong>الجولة ${plRound}</strong><div class="small">${plRound===curRound()?"🟢 الجولة الحالية • ":'<a href="#" onclick="manual=false;plRound=curRound();renderPL();return false" style="color:var(--gold)">ارجع للجولة الحالية</a> • '}اسحب لتغيير الجولة</div></div><button onclick="go(1)" aria-label="التالية">‹</button></div>`+fx.filter(f=>f.round===plRound).sort((a,c)=>new Date(a.kickoff)-new Date(c.kickoff)).map(f=>{const d=f.kickoff?new Date(f.kickoff):null;
 return `<article class="fixture-card"><div class="fixture-top"><span>${d?d.toLocaleDateString("ar-EG",{...tz,weekday:"long",day:"numeric",month:"long"}):"موعد غير محدد"}</span><b style="color:var(--gold)">${d?d.toLocaleTimeString("ar-EG",{...tz,hour:"2-digit",minute:"2-digit"}):""}</b></div><div class="fixture-teams"><span class="tm">${bd(f.hc)}${f.home}</span><span class="fixture-vs">${f.homeScore==null?"VS":f.homeScore+" - "+f.awayScore}</span><span class="tm">${bd(f.ac)}${f.away}</span></div><div class="fixture-league">${f.finished?"انتهت":"قادمة"}</div></article>`}).join("")}
-async function loadData(){try{const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+" ← "+r.status);return r.json()});
+async function loadData(){try{const j=u=>fetch(u+"?t="+Date.now()).then(r=>{if(!r.ok)throw new Error(u+" ← "+r.status);return r.json()});
 const pl=await j("data/players.json");
 players=pl.map(p=>({id:1000+p.id,name:p.name,club:p.team,league:"الدوري الإنجليزي",pos:POS_AR[p.pos],rating:Math.min(95,Math.round(62+(p.ppg||0)*4.2)),price:p.price,pts:p.gw||0,total:p.points,code:p.code,tcode:p.tcode,hurt:p.status&&p.status!=="a"}));live=true;
-try{fx=await j("data/fixtures.json");const now=Date.now()-72e5,u=fx.filter(f=>f.round&&f.kickoff&&new Date(f.kickoff)>now).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff))[0];plRound=u?u.round:(fx[fx.length-1]||{}).round}catch(e){fx=[]}
+try{fx=await j("data/fixtures.json");if(!manual)plRound=curRound()}catch(e){fx=[]}
 try{meta=await j("data/meta.json")}catch(e){}}catch(e){live=false;err=String(e.message||e)}
 if(live){selected=selected.filter(id=>players.some(p=>p.id===id));if(!selected.includes(captain))captain=0;save()}
 const bn=document.getElementById("dataBanner");bn.textContent=live?"":"⚠️ بيانات تجريبية. السبب: "+err;bn.style.display=live?"none":"block";fillClubs();refresh()}
@@ -332,7 +334,7 @@ if(Array.isArray(m.kx_squad)&&m.kx_squad.length){const ids=m.kx_squad.filter(id=
 st.textContent="حسابك متصل. تشكيلتك بتتحفظ تلقائياً على حسابك.";if(selected.length)scheduleCloudSave()}
 async function saveTeamToCloud(){if(!currentUser)return;const st=document.getElementById("cloudStatus");try{const{error}=await supabaseClient.auth.updateUser({data:{kx_squad:selected,kx_cap:captain}});if(error)throw error;st.textContent="تم حفظ تشكيلتك على حسابك.";st.style.color="var(--green)"}catch(e){st.textContent="تعذر الحفظ: "+(e.message||"");st.style.color="var(--red)"}}
 function budget(){return 100-selectedPlayers().reduce((s,p)=>s+p.price,0)}
-dataReady=loadData();try{fillClubs();refresh()}catch(e){console.error(e)}
+dataReady=loadData();setInterval(loadData,3e5);setInterval(()=>{if(!manual&&fx.length){const r=curRound();if(r!==plRound){plRound=r;renderPL()}}},6e4);try{fillClubs();refresh()}catch(e){console.error(e)}
 </script>
 <script>
 let kxDone=0;const _al=afterLogin;afterLogin=function(u){kxDone=1;return _al(u)};
@@ -343,5 +345,45 @@ if(ev==="SIGNED_OUT")showSignedOut();else if(ses&&ses.user&&!kxDone)setTimeout((
 (async()=>{try{let ses=(await supabaseClient.auth.getSession()).data.session;
 if(!ses){const b=JSON.parse(localStorage.getItem("kx_sess")||"null");if(b){const r=await supabaseClient.auth.setSession({access_token:b.a,refresh_token:b.r});if(r.error)localStorage.removeItem("kx_sess");else ses=r.data.session}}
 if(ses&&ses.user&&!kxDone)await afterLogin(ses.user)}catch(e){}})();
+</script>
+<script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const locked=()=>!!(meta&&meta.deadline&&Date.now()>=new Date(meta.deadline).getTime());
+const myName=()=>currentUser?(currentUser.user_metadata?.kx_name||(currentUser.email||"لاعب").split("@")[0]):"";
+const _tp=togglePlayer,_sc=setCap;
+togglePlayer=id=>locked()?toast("🔒 الفريق مقفول لحد ما الجولة الجاية تفتح"):_tp(id);
+setCap=id=>locked()?toast("🔒 الفريق مقفول لحد ما الجولة الجاية تفتح"):_sc(id);
+document.getElementById("squad").insertAdjacentHTML("afterbegin",'<div class="notice" id="lockBox"></div>');
+setInterval(()=>{const b=document.getElementById("lockBox");if(!b)return;
+if(!meta||!meta.deadline){b.style.display="none";return}b.style.display="block";
+const d=new Date(meta.deadline)-Date.now();
+b.innerHTML=d>0?`✏️ تقدر تغيّر فريقك لحد الديدلاين (${meta.name}): <b>${Math.floor(d/864e5)} يوم ${Math.floor(d%864e5/36e5)} ساعة ${Math.floor(d%36e5/6e4)} د</b>`:"🔒 الفريق مقفول. هيتفتح لما الجولة الجاية تظهر."},1000);
+const _st=saveTeamToCloud;
+saveTeamToCloud=async function(){await _st();try{if(currentUser&&meta&&meta.id&&!locked())await supabaseClient.from("kx_squads").upsert({user_id:currentUser.id,gw:meta.id,ids:selected,captain:captain||null})}catch(e){}};
+function gwPoints(ids,cap,pm){const bak=selected;selected=ids;let xi;try{xi=lineup().xi}finally{selected=bak}
+const pt=p=>pm[p.id-1000]||0,c=xi.find(p=>p.id===cap);return xi.reduce((s,p)=>s+pt(p),0)+(c?pt(c):0)}
+async function syncScores(){if(!currentUser||!meta||!meta.cur||!live)return;
+try{if(!locked()&&meta.id&&selected.length)await supabaseClient.from("kx_squads").upsert({user_id:currentUser.id,gw:meta.id,ids:selected,captain:captain||null});
+const sq=(await supabaseClient.from("kx_squads").select("gw,ids,captain").eq("user_id",currentUser.id).order("gw")).data;if(!sq||!sq.length)return;
+const have=Object.fromEntries(((await supabaseClient.from("kx_scores").select("gw,points").eq("user_id",currentUser.id)).data||[]).map(r=>[r.gw,r.points])),rows=[];
+for(let g=sq[0].gw;g<=meta.cur;g++){if(have[g]!==undefined&&g<meta.cur)continue;
+let pm;try{pm=await (await fetch(`data/gw/${g}.json?t=${Date.now()}`)).json()}catch(e){continue}
+const s=[...sq].reverse().find(r=>r.gw<=g);if(!s)continue;const pts=gwPoints(s.ids,s.captain,pm);if(have[g]!==pts)rows.push({user_id:currentUser.id,gw:g,points:pts,name:myName()})}
+if(rows.length)await supabaseClient.from("kx_scores").upsert(rows)}catch(e){}}
+document.getElementById("friends").innerHTML=`<div class="section-head"><h2>🏆 الترتيب العام</h2><span>مجموع نقط الجولات</span></div><span id="myPoints" style="display:none"></span><div style="display:flex;gap:8px;margin-bottom:10px"><input class="field" id="nameInp" placeholder="اسمك في الترتيب" style="flex:1"><button class="btn secondary" onclick="saveName()">حفظ</button></div><div id="lb"></div>`;
+async function saveName(){const v=document.getElementById("nameInp").value.trim().slice(0,20);if(!currentUser)return toast("سجّل دخول الأول");if(!v)return;
+await supabaseClient.auth.updateUser({data:{kx_name:v}});currentUser.user_metadata={...currentUser.user_metadata,kx_name:v};
+await supabaseClient.from("kx_scores").update({name:v}).eq("user_id",currentUser.id);toast("تم حفظ الاسم");renderLB()}
+async function renderLB(){const el=document.getElementById("lb");if(!el)return;
+if(!currentUser){el.innerHTML='<div class="notice">سجّل دخول عشان تشارك في الترتيب وتشوف نقطك.</div>';return}
+document.getElementById("nameInp").value=myName();
+const{data,error}=await supabaseClient.from("kx_scores").select("user_id,gw,points,name");
+if(error){el.innerHTML='<div class="notice">الترتيب محتاج إعداد جداول Supabase (كود SQL). الرسالة: '+esc(error.message)+'</div>';return}
+const m={};for(const r of data){const x=m[r.user_id]||(m[r.user_id]={n:r.name,t:0,last:0,lg:-1});x.t+=r.points;if(r.gw>x.lg){x.lg=r.gw;x.last=r.points;x.n=r.name}}
+const l=Object.entries(m).sort((a,b)=>b[1].t-a[1].t);
+el.innerHTML=l.map(([id,x],i)=>`<div class="leader"><div class="rank">${i+1}</div><div><strong>${esc(x.n)}${id===currentUser.id?" (أنت)":""}</strong><small>آخر جولة: ${x.last} نقطة</small></div><div class="points">${x.t} نقطة</div></div>`).join("")||'<div class="empty">لسه مفيش نقط. اختار فريقك وانتظر أول جولة.</div>'}
+const _sp=showPage;showPage=id=>{_sp(id);if(id==="friends"){syncScores().then(renderLB)}};
+const _al2=afterLogin;afterLogin=async u=>{await _al2(u);await dataReady;syncScores()};
+setInterval(syncScores,3e5);
 </script>
 </body></html>
