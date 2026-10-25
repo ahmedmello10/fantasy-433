@@ -386,4 +386,37 @@ const _sp=showPage;showPage=id=>{_sp(id);if(id==="friends"){syncScores().then(re
 const _al2=afterLogin;afterLogin=async u=>{await _al2(u);await dataReady;syncScores()};
 setInterval(syncScores,3e5);
 </script>
+<script>
+document.head.insertAdjacentHTML("beforeend","<style>.lgtab{flex:none;background:#232d47;color:#fff;border-radius:20px;padding:8px 14px;font-size:13px}.lgtab.on{background:var(--gold);color:#111;font-weight:900}</style>");
+let myLeagues=[],curLg="all";
+document.getElementById("friends").innerHTML=`<div class="section-head"><h2>🏆 الترتيب</h2><span>مجموع نقط الجولات</span></div><span id="myPoints" style="display:none"></span><div id="lgTabs" style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px"></div><div id="lgInfo"></div><div id="lb"></div>
+<div class="challenge" style="margin-top:14px"><div class="eyebrow">دوري خاص بأصحابك</div><input class="field" id="lgName" style="width:100%;margin-top:8px" placeholder="اسم الدوري (مثال: دوري الشلة)"><button class="btn primary" style="width:100%;margin-top:8px" onclick="createLeague()">إنشاء دوري</button><input class="field" id="lgJoin" style="width:100%;margin-top:12px" placeholder="كود دوري صاحبك"><button class="btn secondary" style="width:100%;margin-top:8px" onclick="joinLeague()">دخول بكود</button><input class="field" id="nameInp" style="width:100%;margin-top:12px" placeholder="اسمك في الترتيب"><button class="btn secondary" style="width:100%;margin-top:8px" onclick="saveName()">حفظ اسمي</button></div>`;
+const gv=i=>document.getElementById(i).value.trim();
+async function createLeague(){const n=gv("lgName").slice(0,30);if(!currentUser)return toast("سجّل دخول الأول");if(!n)return toast("اكتب اسم الدوري");
+const{data,error}=await supabaseClient.rpc("kx_create",{lname:n});if(error)return toast("تعذر الإنشاء: "+error.message);
+curLg=data.id;document.getElementById("lgName").value="";toast("تم! كود الدوري: "+data.code);renderLB()}
+async function joinLeague(){const c=gv("lgJoin");if(!currentUser)return toast("سجّل دخول الأول");if(!c)return toast("اكتب الكود");
+const{data,error}=await supabaseClient.rpc("kx_join",{c});if(error)return toast("تعذر الدخول: "+error.message);
+curLg=data.id;document.getElementById("lgJoin").value="";toast("دخلت دوري "+data.name);renderLB()}
+async function saveName(){const v=gv("nameInp").slice(0,20);if(!currentUser)return toast("سجّل دخول الأول");if(!v)return;
+await supabaseClient.auth.updateUser({data:{kx_name:v}});currentUser.user_metadata={...currentUser.user_metadata,kx_name:v};
+await supabaseClient.from("kx_scores").update({name:v}).eq("user_id",currentUser.id);await supabaseClient.from("kx_members").update({name:v}).eq("user_id",currentUser.id);toast("تم حفظ الاسم");renderLB()}
+async function renderLB(){const el=document.getElementById("lb");if(!el)return;
+if(!currentUser){document.getElementById("lgTabs").innerHTML="";el.innerHTML='<div class="notice">سجّل دخول عشان تشارك في الترتيب وتعمل دوري مع أصحابك.</div>';return}
+document.getElementById("nameInp").value=myName();
+const mem=await supabaseClient.from("kx_members").select("league_id,kx_leagues(id,name,code)").eq("user_id",currentUser.id);
+myLeagues=mem.error?[]:(mem.data||[]).map(r=>r.kx_leagues).filter(Boolean);
+if(curLg!=="all"&&!myLeagues.some(l=>l.id===curLg))curLg="all";
+document.getElementById("lgTabs").innerHTML=[{id:"all",name:"🌍 العام"},...myLeagues].map(l=>`<button class="lgtab ${l.id===curLg?"on":""}" onclick="curLg='${l.id}';renderLB()">${esc(l.name)}</button>`).join("");
+const lg=myLeagues.find(l=>l.id===curLg),info=document.getElementById("lgInfo");let list;
+if(lg){info.innerHTML=`<div class="notice">كود الدوري: <b style="color:var(--gold);letter-spacing:2px">${esc(lg.code)}</b> — ابعته لأصحابك <button class="btn secondary" style="padding:4px 10px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(lg.code)}');toast('تم نسخ الكود')">نسخ</button></div>`;
+const ms=(await supabaseClient.from("kx_members").select("user_id,name").eq("league_id",lg.id)).data||[];
+const sc=(await supabaseClient.from("kx_scores").select("user_id,gw,points").in("user_id",ms.map(m=>m.user_id))).data||[];
+list=ms.map(m=>{const r=sc.filter(x=>x.user_id===m.user_id);const lastG=Math.max(-1,...r.map(x=>x.gw));return{id:m.user_id,n:m.name,t:r.reduce((a,x)=>a+x.points,0),last:(r.find(x=>x.gw===lastG)||{}).points||0}})}
+else{info.innerHTML="";const{data,error}=await supabaseClient.from("kx_scores").select("user_id,gw,points,name");
+if(error){el.innerHTML='<div class="notice">الترتيب محتاج إعداد جداول Supabase (كود SQL). الرسالة: '+esc(error.message)+'</div>';return}
+const m={};for(const r of data){const x=m[r.user_id]||(m[r.user_id]={id:r.user_id,n:r.name,t:0,last:0,lg:-1});x.t+=r.points;if(r.gw>x.lg){x.lg=r.gw;x.last=r.points;x.n=r.name}}list=Object.values(m)}
+list.sort((a,b)=>b.t-a.t);
+el.innerHTML=list.map((x,i)=>`<div class="leader"><div class="rank">${i+1}</div><div><strong>${esc(x.n)}${x.id===currentUser.id?" (أنت)":""}</strong><small>آخر جولة: ${x.last} نقطة</small></div><div class="points">${x.t} نقطة</div></div>`).join("")||'<div class="empty">لسه مفيش نقط. اختار فريقك وانتظر أول جولة.</div>'}
+</script>
 </body></html>
